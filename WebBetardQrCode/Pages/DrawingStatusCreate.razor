@@ -1,0 +1,146 @@
+﻿@page "/DrawingStatusCreate/{OrderId}/{DrawingName}"
+@using WebBetardQrCode
+@using WebBetardQrCode.Models
+@using WebBetardQRCodeLib.DataAccess
+@using WebBetardQRCodeLib.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using QRCoder
+@using System.Drawing
+@using System
+@using Microsoft.AspNetCore.Components;
+
+@inject IUserData userData
+@inject IOrderData orderData
+@inject IDrawingStatusTypeData drawingStatusData
+@inject NavigationManager navManager
+
+<h1>Utwórz komentarz</h1>
+
+<div>
+    <button class="btn btn-secondary" @onclick="ClosePage">Wróć</button>
+</div>
+
+<div class="container">
+    <div class="row">
+
+        @if (order is not null)
+        {
+            <div class="col-5">
+                @order.NumberBET @order.Name
+            </div>
+            <div class="col-15">
+                @drawing.Name @drawing.Data
+            </div>
+
+        }
+    </div>
+</div>
+
+<div class="container" style="width: 700px; padding: 5px">
+    <div class="row bg-secondary font-weight-bold text-white rounded-top" style="padding:5px">
+        Zmiany statusu
+    </div>
+    @foreach (var comment in comments)
+    {
+<div class="row bg-light">
+
+    <div class="col 10 text-right">@comment.Data</div>
+    <div class="col 15">@comment.DrawingStatusType.Text</div>
+    <div class="col 15">@comment.User.Function</div>
+</div>
+    }
+</div>
+
+<div class="container" style="width:500px">
+
+    <EditForm Model="comment" OnValidSubmit="CreateOneComment">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div>
+            <label>
+                Kod identyfikacyjny
+                <InputText @bind-Value="comment.Pass" />
+            </label>
+        </div>
+
+        <div>
+            <label for="status">Wybierz status</label>
+            <div>
+                <WebBetardQrCode.Components.MyInputRadioGroup id="status" @bind-Value="comment.DrawingStatusId">
+                    @foreach (var c in statustypes)
+                    {
+                        <div>
+                            <InputRadio Value="@c.Id" id="@c.Id"/>
+                            <label for="@c.Id">@c.Text</label>
+                        </div>
+                    }
+                </WebBetardQrCode.Components.MyInputRadioGroup>
+            </div>
+
+            
+        </div>
+        <div class="text-center font-weight-bold" font-color="red">@StatusEntry</div>
+        <div class="text-center">
+            <button class="btn btn-primary" type="submit">Wprowadź</button>
+        </div>
+    </EditForm>
+</div>
+
+
+
+@code {
+    private CreateDrawngStatusModel comment = new();
+    private OrderModel order;
+    private DrawingModel drawing;
+    private List<DrawingStatusModel> comments = new();
+    private List<DrawingStatusTypeModel> statustypes = new();
+    private DrawingStatusTypeModel currentStatustype=new();
+    private UserModel loggedInUser=new();
+
+
+    [Parameter]
+    public string OrderId { get; set; }
+
+    [Parameter]
+    public string DrawingName { get; set; }
+
+    public string StatusEntry { get; set; }
+    protected async override Task OnInitializedAsync()
+    {
+        order = await orderData.GetOrdersAsync(OrderId);
+        drawing = (await orderData.GetOrdersAsync(OrderId)).Drawings.FirstOrDefault(x => x.Name == DrawingName);
+        statustypes = (await drawingStatusData.GetAllDrawingStatusTypes());
+        comments = (await orderData.GetOrdersAsync(OrderId)).Drawings.FirstOrDefault(x => x.Name == DrawingName).DrawingStatus;
+        //TODO - replace is user
+        //   loggedInUser = await userData.GetUser("6221dae2be389068486ea62d");
+    }
+
+    private void ClosePage()
+    {
+        navManager.NavigateTo($"/Drawing/{OrderId}/{drawing.Name}");
+    }
+
+    private async Task CreateOneComment()
+    {
+        DrawingStatusModel u = new();
+        u.Data = comment.Data;
+        u.DrawingStatusType = statustypes.FirstOrDefault(x=>x.Id== comment.DrawingStatusId);
+        u.User = await userData.GetUserFromPass(comment.Pass);
+
+        if (u.User is not null)
+        {
+            DrawingModel updatedDrawing = drawing;
+            updatedDrawing.DrawingStatus.Add(u);
+
+            order.Drawings.Remove(drawing);
+            order.Drawings.Add(updatedDrawing);
+            await orderData.UpdateOrderAsync(order);
+
+            comment = new();
+        }
+        else
+        {
+            StatusEntry = "Błąd autoryzacji";
+        }
+    }
+}

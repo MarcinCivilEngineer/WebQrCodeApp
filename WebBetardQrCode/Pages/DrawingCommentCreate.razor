@@ -1,0 +1,183 @@
+﻿@page "/DrawingCommentCreate/{OrderId}/{DrawingName}"
+@using WebBetardQrCode
+@using WebBetardQrCode.Models
+@using WebBetardQRCodeLib.DataAccess
+@using WebBetardQRCodeLib.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using QRCoder
+@using System.Drawing
+@using System
+@using Microsoft.AspNetCore.Components;
+@using System.IO
+@using Microsoft.AspNetCore.Hosting
+@inject IWebHostEnvironment Environment
+
+
+@inject IUserData userData
+@inject IOrderData orderData
+@inject NavigationManager navManager
+
+<h1>Utwórz komentarz</h1>
+
+<div>
+    <button class="btn btn-secondary" @onclick="ClosePage">Wróć</button>
+</div>
+
+<div class="container" style="width: 700px;padding:5px">
+    <div class="row h-50 bg-primary rounded text-white" >
+
+        @if (order is not null)
+        {
+            <div class="col font-weight-bolder">
+                @order.NumberBET @order.Name
+            </div>
+            <div class="col font-weight-bold">
+                @drawing.Name</div>
+            <div  class="col">@drawing.Data.ToShortDateString()</div>
+        <div class="col text-right">
+    @if (drawing.DrawingRevision?.Count > 0)
+    {
+            <div>@drawing.DrawingRevision.OrderByDescending(x => x.Data).FirstOrDefault().Symbol</div><div>@drawing.DrawingRevision.OrderByDescending(x => x.Data).FirstOrDefault().Data</div>
+    }
+</div>
+        }
+    </div>
+</div>
+
+<div class="container" style="width: 700px; padding: 5px">
+    <div class="row bg-secondary font-weight-bold text-white rounded-top" style="padding:5px">
+        Komentarze
+    </div>
+    @foreach (var comment in comments)
+    {
+<div class="row bg-light">
+    <div class="col 10 text-right">@comment.Data</div>
+    <div class="col 15">@comment.Text</div>
+    <div class="col 10 text-right">
+        @if (comment.Src is not null)
+        {
+            @if (comment.Src != "")
+            {
+                <a href="@comment.Src"  target="_blank"><span class="oi oi-spreadsheet"/></a>
+            }
+        }
+    </div>
+    <div class="col">@comment.CommentUser.Name @comment.CommentUser.Mail @comment.CommentUser.Phone @comment.CommentUser.Company</div>
+</div>
+    }
+</div>
+
+<div class="container" style="width:500px">
+
+    <EditForm Model="comment" OnValidSubmit="CreateOneComment">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div>
+            <label class="col-form-label" for="comment-name">Komentarz</label>
+            <InputText class="form-control" id="comment-name" @bind-Value="comment.Text"></InputText>
+        </div>
+
+        <div>
+            <label class="col-form-label" for="attach-name">Załcznik</label>
+            <InputFile class="form-control" id="attach-name" OnChange="@UploadFile"></InputFile>
+        </div>
+
+        <div>
+            <label class="col-form-label" for="col-form-label">Nick</label>
+            <InputText class="form-control" id="comment-name" @bind-Value="comment.Name"></InputText>
+        </div>
+        <div>
+            <label class="col-form-label" for="comment-user">Email</label>
+            <InputText class="form-control" id="comment-name" @bind-Value="comment.Mail"></InputText>
+        </div>
+        <div>
+            <label class="col-form-label" for="comment-user">Telefon</label>
+            <InputText class="form-control" id="comment-name" @bind-Value="comment.Phone"></InputText>
+        </div>
+        <div>
+            <label class="col-form-label" for="comment-user">Nazwa firmy</label>
+            <InputText class="form-control" id="comment-name" @bind-Value="comment.Company"></InputText>
+        </div>
+        <div class="text-center" style="padding:5px">
+            <button class="btn btn-primary" type="submit">Wprowadź</button>
+        </div>
+    </EditForm>
+</div>
+
+
+
+@code {
+    private CreateCommentModel comment = new();
+    private OrderModel order;
+    private DrawingModel drawing;
+    private List<CommentModel> comments;
+    private UserModel loggedInUser;
+
+
+    [Parameter]
+    public string OrderId { get; set; }
+
+    [Parameter]
+    public string DrawingName { get; set; }
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        order = await orderData.GetOrdersAsync(OrderId);
+        drawing = (await orderData.GetOrdersAsync(OrderId)).Drawings.FirstOrDefault(x => x.Name == DrawingName);
+        comments = (await orderData.GetOrdersAsync(OrderId)).Drawings.FirstOrDefault(x => x.Name == DrawingName).Comments;
+        //TODO - replace is user
+        //   loggedInUser = await userData.GetUser("6221dae2be389068486ea62d");
+    }
+
+    private void ClosePage()
+    {
+        navManager.NavigateTo($"/Drawing/{OrderId}/{drawing.Name}");
+    }
+
+    private IBrowserFile loadedFiles;
+    private string ImgUrl;
+
+    private async Task UploadFile(InputFileChangeEventArgs e)
+    {
+        var extension = Path.GetExtension(e.File.Name);
+        var pathDir = Path.Combine(Environment.ContentRootPath, "wwwroot", "upload", OrderId);
+        var pathServer = Path.Combine("upload", OrderId, Path.GetFileNameWithoutExtension(Path.GetRandomFileName())+extension);
+        var path = Path.Combine(Environment.ContentRootPath, "wwwroot", pathServer);
+        if (!Directory.Exists(pathDir)) {
+            Directory.CreateDirectory(pathDir);
+        }
+        await using FileStream fs = new(path, FileMode.Create);
+        
+        await e.File.OpenReadStream(5120000).CopyToAsync(fs);
+        ImgUrl = Path.Combine("https://localhost:44314/", pathServer);
+    }
+
+    private async Task CreateOneComment()
+    {
+        CommentUserModel u = new();
+        u.Company = comment.Company;
+        u.Mail = comment.Mail;
+        u.Name = comment.Name;
+        u.Phone = comment.Phone;
+
+        CommentModel t = new();
+        t.Text = comment.Text;
+        t.CommentUser = u;
+        if (ImgUrl is not null) {
+            t.Src = ImgUrl;
+        }
+        else
+        {
+            t.Src = "";
+        }
+        DrawingModel updatedDrawing = drawing;
+        updatedDrawing.Comments.Add(t);
+
+        order.Drawings.Remove(drawing);
+        order.Drawings.Add(updatedDrawing);
+        await orderData.UpdateOrderAsync(order);
+
+        comment.Text = "";
+    }
+}

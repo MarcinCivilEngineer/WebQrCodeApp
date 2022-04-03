@@ -1,0 +1,267 @@
+﻿@page "/SampleData"
+@using WebBetardQRCodeLib.DataAccess
+@using WebBetardQRCodeLib.Models
+@using System.Collections.Generic
+
+@inject IDrawingStatusTypeData drawingStatusTypeData
+@inject IUserData userData
+@inject IOrderData orderData
+
+<h3>Dane bazowe</h3>
+
+
+@if (drawingStatusTypeCreated)
+{
+    <h4>Typy statusów dla rysunków istnieją</h4>
+}
+else
+{
+    <button class="btn btn-primary" @onclick="CreateDrawingStatusTypes">Utwórz Typy statusów dla rysunków</button>
+}
+
+
+<button class="btn btn-secondary" @onclick="CreateSampleData">Przykładowe dane</button>
+
+
+@code {
+    private bool drawingStatusTypeCreated = false;
+
+
+    private async Task CreateDrawingStatusTypes()
+    {
+        var drawnigStatusTypes = await drawingStatusTypeData.GetAllDrawingStatusTypes();
+        if (drawnigStatusTypes?.Count > 0)
+        {
+            drawingStatusTypeCreated = true;
+        }
+        else
+        {
+            var sa = "a";
+            DrawingStatusTypeModel drawingStatusType = new()
+            {
+                Text = "wydany rysunek"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+            drawingStatusType = new()
+            {
+                Text = "wykonano zbrojenie"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+            drawingStatusType = new()
+            {
+                Text = "sprawodzno zbrojenie"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+            drawingStatusType = new()
+            {
+                Text = "wykonano forme"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+            drawingStatusType = new()
+            {
+                Text = "wbudowano akcesoria"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+
+
+            drawingStatusType = new()
+            {
+                Text = "kontrola jakości - zbrojenie"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+
+            drawingStatusType = new()
+            {
+                Text = "kontrola jakości - akcesoria"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+            drawingStatusType = new()
+            {
+                Text = "ułożono mieszkankę betonową"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+            drawingStatusType = new()
+            {
+                Text = "umieszczono na plac"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+            drawingStatusType = new()
+            {
+                Text = "kontrola jakości - odchyłk geometryczne geometri i akcesoriów"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+
+
+            drawingStatusType = new()
+            {
+                Text = "wywiezono na budowę"
+            };
+            await drawingStatusTypeData.CreateDrawingStatusType(drawingStatusType);
+            drawingStatusTypeCreated = true;
+        }
+    }
+
+    private async Task CreateSampleData()
+    {
+        UserModel user = new()
+        {
+            Company = "Betard",
+            LastAuthCode = "alfa1",
+            Mail = "m.rutkowski@betard.pl",
+            Phone = "123",
+            Function = "projektant warsztatówki",
+            AuthorizePass = "bet1"
+
+        };
+        await userData.CreateUser(user);
+        {
+            user = new()
+            {
+                Company = "Betard",
+                LastAuthCode = "alfa2",
+                Mail = "a.chalupnik@betard.pl",
+                Phone = "123",
+                Function = "kierownik produkcji (długołęka)",
+                AuthorizePass = "bet2"
+
+            };
+
+            await userData.CreateUser(user);
+            user = new()
+            {
+                Company = "Betard",
+                LastAuthCode = "alfa2",
+                Mail = "l.glos@betard.pl",
+                Phone = "123",
+                Function = "spedycja (długołęka)",
+                AuthorizePass = "bet3"
+
+            };
+
+
+            //UserLogModel userLog = new() { Text = "tryLogin" };
+
+            //user.UserLogs.Add(userLog);
+
+            //userLog = new() { Text = "logIn" };
+            //user.UserLogs.Add(userLog);
+
+            await userData.CreateUser(user);
+
+
+            //OrderModel task = new()
+            //{
+            //    NumberBET = "BET1111_22",
+            //    Name = "Budowa domu jednorodzinnego"
+            //};
+
+            //DrawingModel drawing = new()
+            //{
+            //    Name = "Ściana SC2-01"
+
+            //};
+
+
+
+            //DrawingStatusModel drawingStatus = new()
+            //{
+            //};
+            //var drawingStatusType = await drawingStatusTypeData.GetDrawingStatusId("w opracowaniu");
+            //drawingStatus.DrawingStatusType = drawingStatusType;
+
+            //drawing.DrawingStatus.Add(drawingStatus);
+
+            //DrawingRevisionModel drawingRevision = new()
+            //{
+            //    Data = new DateTime(2022, 01, 02),
+            //    Symbol = "R0",
+            //    Text = "Pierwsze wydanie"
+            //};
+            //drawing.DrawingRevision.Add(drawingRevision);
+
+            //drawingRevision = new()
+            //{
+            //    Data = new DateTime(2022, 01, 08),
+            //    Symbol = "R1",
+            //    Text = "Zmiana typu tulei"
+            //};
+            //drawing.DrawingRevision.Add(drawingRevision);
+
+            //CommentModel comment = new()
+            //{
+            //    Text = "Pręt nr 2 jest za długi",
+
+            //};
+            //drawing.Comments.Add(comment);
+
+
+            //task.Drawings.Add(drawing);
+
+            //await orderData.CreateOrderAsync(task);
+
+
+
+
+
+            //task = new()
+            //{
+            //    NumberBET = "BET1111_22",
+            //    Name = "Hala wielonawowa"
+            //};
+
+            //drawing = new()
+            //{
+            //    Name = "Ściana SC2-02"
+            //};
+
+
+
+            //drawingStatus = new()
+            //{
+            //};
+            //drawingStatusType = await drawingStatusTypeData.GetDrawingStatusId("w opracowaniu");
+            //drawingStatus.DrawingStatusType = drawingStatusType;
+
+            //drawing.DrawingStatus.Add(drawingStatus);
+
+            //drawingRevision = new()
+            //{
+            //    Data = new DateTime(2022, 01, 01),
+            //    Symbol = "R0",
+            //    Text = "Pierwsze wydanie"
+            //};
+            //drawing.DrawingRevision.Add(drawingRevision);
+
+            //drawingRevision = new()
+            //{
+            //    Data = new DateTime(2022, 01, 06),
+            //    Symbol = "R1",
+            //    Text = "Zmiana typu tulei"
+            //};
+            //drawing.DrawingRevision.Add(drawingRevision);
+
+            //comment = new()
+            //{
+            //    Text = "Pręt nr 12 jest nieczytelny",
+
+            //};
+            //drawing.Comments.Add(comment);
+
+
+            //task.Drawings.Add(drawing);
+
+            //await orderData.CreateOrderAsync(task);
+
+        }
+
+
+    }
+}

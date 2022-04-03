@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31613.86
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebBetardQrCode", "WebBetardQrCode\WebBetardQrCode.csproj", "{B999AA92-886A-4ED5-99D1-61E5C3303143}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebBetardQRCodeLib", "WebBetardQRCodeLib\WebBetardQRCodeLib.csproj", "{97B8572A-3D5E-4A12-9CDB-2A01BA3954F5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B999AA92-886A-4ED5-99D1-61E5C3303143}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B999AA92-886A-4ED5-99D1-61E5C3303143}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B999AA92-886A-4ED5-99D1-61E5C3303143}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B999AA92-886A-4ED5-99D1-61E5C3303143}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97B8572A-3D5E-4A12-9CDB-2A01BA3954F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97B8572A-3D5E-4A12-9CDB-2A01BA3954F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97B8572A-3D5E-4A12-9CDB-2A01BA3954F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97B8572A-3D5E-4A12-9CDB-2A01BA3954F5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8994F030-B3D0-4D05-A92A-40EF8B7A84BC}
+	EndGlobalSection
+EndGlobal

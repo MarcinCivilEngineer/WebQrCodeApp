@@ -1,0 +1,125 @@
+﻿@page "/DrawingRevisionCreate/{OrderId}/{DrawingName}"
+@using WebBetardQrCode
+@using WebBetardQrCode.Models
+@using WebBetardQRCodeLib.DataAccess
+@using WebBetardQRCodeLib.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using QRCoder
+@using System.Drawing
+@using System
+@using Microsoft.AspNetCore.Components;
+
+@inject IUserData userData
+@inject IOrderData orderData
+@inject NavigationManager navManager
+
+<h1>Utwórz komentarz</h1>
+
+<div>
+    <button class="btn btn-secondary" @onclick="ClosePage">Wróć</button>
+</div>
+
+<div class="container">
+    <div class="row">
+
+        @if (order is not null)
+        {
+            <div class="col-5">
+                @order.NumberBET @order.Name
+            </div>
+            <div class="col-15">
+                @drawing.Name @drawing.Data
+            </div>
+
+        }
+    </div>
+    </div>
+
+    <div class="container" style="width: 700px; padding: 5px">
+        <div  class="row bg-secondary font-weight-bold text-white rounded-top" style="padding:5px">
+            Wydania rysunków
+        </div>
+        @foreach (var comment in comments)
+        {
+    <div class="row bg-light">
+        <div class="col 1">@comment.Symbol</div>
+        <div class="col 10 text-right">@comment.Data</div>
+        <div class="col 15">@comment.Text</div>
+    </div>
+        }
+    </div>
+
+    <div class="container" style="width:500px">
+
+        <EditForm Model="comment" OnValidSubmit="CreateOneComment">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div>
+                <label>
+                    Data rewizji:
+                    <InputDate @bind-Value="comment.Data" DisplayName="Data rewizji" />
+                </label>
+            </div>
+
+            <div>
+                <label for="comment-name">Symbol rewizji</label>
+                <InputText class="form-control" id="comment-name" @bind-Value="comment.Symbol"></InputText>
+            </div>
+            <div>
+                <label for="comment-namee">Treść rewizji</label>
+                <InputText class="form-control" id="comment-namee" @bind-Value="comment.Text"></InputText>
+            </div>
+            <div class="text-center">
+                <button class="btn btn-primary" type="submit">Wprowadź</button>
+            </div>
+        </EditForm>
+    </div>
+
+        
+
+        @code {
+            private CreateRevisionModel comment = new();
+            private OrderModel order;
+            private DrawingModel drawing;
+            private List<DrawingRevisionModel> comments = new();
+            private UserModel loggedInUser;
+
+
+            [Parameter]
+            public string OrderId { get; set; }
+
+            [Parameter]
+            public string DrawingName { get; set; }
+
+
+            protected async override Task OnInitializedAsync()
+            {
+                order = await orderData.GetOrdersAsync(OrderId);
+                drawing = (await orderData.GetOrdersAsync(OrderId)).Drawings.FirstOrDefault(x => x.Name == DrawingName);
+                comments = (await orderData.GetOrdersAsync(OrderId)).Drawings.FirstOrDefault(x => x.Name == DrawingName).DrawingRevision;
+                //TODO - replace is user
+                //   loggedInUser = await userData.GetUser("6221dae2be389068486ea62d");
+            }
+
+            private void ClosePage()
+            {
+                navManager.NavigateTo($"/Drawing/{OrderId}/{drawing.Name}");
+            }
+
+            private async Task CreateOneComment()
+            {
+                DrawingRevisionModel u = new();
+                u.Data = comment.Data;
+                u.Symbol = comment.Symbol;
+                u.Text = comment.Text;
+
+                DrawingModel updatedDrawing = drawing;
+                updatedDrawing.DrawingRevision.Add(u);
+
+                order.Drawings.Remove(drawing);
+                order.Drawings.Add(updatedDrawing);
+                await orderData.UpdateOrderAsync(order);
+
+                comment = new();
+            }
+        }

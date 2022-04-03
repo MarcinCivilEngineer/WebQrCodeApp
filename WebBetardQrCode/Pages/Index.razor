@@ -1,0 +1,33 @@
+﻿@page "/"
+@using WebBetardQRCodeLib.DataAccess
+@using WebBetardQRCodeLib.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+
+@inject IDrawingStatusTypeData drawingStatusTypeData
+@inject IOrderData orderData
+@inject IUserData userData
+@inject NavigationManager navManager
+@inject ProtectedSessionStorage sessionStorage
+
+<h1>BIM - elementów</h1>
+
+<h2>Tematów w produkcji</h2>
+<h2>Elementów wstrzymanych</h2>
+<h2>Wyprodukowanych</h2>
+
+@code {
+
+    protected async override Task OnInitializedAsync()
+    {
+
+        //TODO - replace is user
+        //   loggedInUser = await userData.GetUser("6221dae2be389068486ea62d");
+    }
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+        }
+    }
+}

@@ -1,0 +1,79 @@
+﻿@page "/DrawingCreate/{OrderId}"
+@using WebBetardQrCode
+@using WebBetardQrCode.Models
+@using WebBetardQRCodeLib.DataAccess
+@using WebBetardQRCodeLib.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using QRCoder
+@using System.Drawing
+@using System
+@using Microsoft.AspNetCore.Components;
+
+@inject IUserData userData
+@inject IOrderData orderData
+@inject NavigationManager navManager
+
+<h1>Utwórz rysunek</h1>
+
+<div>
+    <div>
+        <div>
+            <button class="btn btn-secondary" @onclick="ClosePage">Wróć</button>
+        </div>
+        @if (order is not null)
+        {
+            <div>
+                @order.NumberBET @order.Name
+            </div>
+        }
+
+        <EditForm Model="drawing" OnValidSubmit="CreateOneDrawing">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div>
+                <label for="drawing-name">Nazwa rysunku</label>
+                <div>Wprowadź nazwe rysunku</div>
+                <InputText id="drawing-number" @bind-Value="drawing.Name"></InputText>
+            </div>
+
+            <div>
+                <button type="submit">Wprowadź</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private CreateDrawingModel drawing = new();
+    private OrderModel order;
+    private List<DrawingModel> drawings;
+    private UserModel loggedInUser;
+
+
+    [Parameter]
+    public string OrderId { get; set; }
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        order = await orderData.GetOrdersAsync(OrderId);
+        drawings = (await orderData.GetOrdersAsync(OrderId)).Drawings;
+        //TODO - replace is user
+        //   loggedInUser = await userData.GetUser("6221dae2be389068486ea62d");
+    }
+
+    private void ClosePage()
+    {
+        navManager.NavigateTo($"/Order/{OrderId}");
+    }
+
+    private async Task CreateOneDrawing()
+    {
+        DrawingModel t = new();
+        t.Name = drawing.Name;
+
+        order.Drawings.Add(t);
+        await orderData.UpdateOrderAsync(order);
+        drawing = new();
+    }
+}

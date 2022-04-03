@@ -1,0 +1,170 @@
+﻿@page "/Order/{OrderId}"
+@using WebBetardQRCodeLib.DataAccess
+@using WebBetardQRCodeLib.Models
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using QRCoder
+@using System.Drawing
+@using System
+@using Microsoft.AspNetCore.Components;
+
+@using System.IO;
+
+
+@inject IOrderData orderData
+@inject NavigationManager navManager
+
+<h1>Zestawienie rysunków</h1>
+
+
+<div>
+    <button class="btn btn-secondary" @onclick="(() => GoBack())">Wróć</button>
+    <button class="btn btn-primary" @onclick="(() => OnClickDrawingCreate())">Wprowadź rysunek</button>
+    <div>
+        <input type="text" placeholder="Wyszukaj"
+               aria-label="Search box"
+               @oninput="((txt) => OnSearchOrderInput((string)txt.Value))" />
+    </div>
+</div>
+
+<table class="table">
+    <thead>
+        <tr>
+            <td>Nazwa rysunku</td>
+            <td>Data wprowadzenia</td>
+            <td>Data ostatniego wydania</td>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
+        @if (orderOne is not null)
+        {
+            <Virtualize Items="@drawings" Context="t" OverscanCount="10">
+                <tr>
+                    <td>
+                        @t.Name
+                    </td>
+                    <td>
+                        @t.Data
+                    </td>
+                    <td>
+                        @if (t.DrawingRevision?.Count > 0) {  
+                        <span>@t.DrawingRevision.OrderByDescending(x => x.Data).FirstOrDefault().Symbol</span> <span>@t.DrawingRevision.OrderByDescending(x => x.Data).FirstOrDefault().Data</span>
+                        }
+                    </td>
+                    <td>
+                        
+                        <div class="btn btn-secondary" @onclick="(() => OnDrawingClick(t.Name))">Szczegóły</div>
+                        <div class="btn btn-secondary" @onclick="(() => OnDrawingQrCreateClick(t.Name))">Generuj kod Qr</div>
+
+                        <div class="btn btn-primary" @onclick="(() => OnDrawingRemoveClick(t.Name))">Usuń</div>
+                    </td>
+                </tr>
+            </Virtualize>
+        }
+    </tbody>
+</table>
+
+@if (Image64 is not null)
+{
+
+        <img src="@Image64">
+    
+}
+
+@code {
+    [Parameter]
+    public string OrderId { get; set; }
+
+    public Bitmap qrCodeImage;
+    protected string Image64 { get; set; }
+
+    private OrderModel orderOne;
+    private DrawingModel drawing;
+    private List<DrawingModel> drawings { get; set; } = new();
+
+
+    protected async override Task OnInitializedAsync()
+    {
+        orderOne = await orderData.GetOrdersAsync(OrderId);
+        drawings = await orderData.GetOrderDrawingsAsync(OrderId);
+    }
+
+    private void GoBack()
+    {
+        navManager.NavigateTo($"/OrderList");
+    }
+
+    private void OnClickDrawingCreate()
+    {
+        navManager.NavigateTo($"/DrawingCreate/{OrderId}");
+    }
+    private void OnDrawingClick(string drawingName)
+    {
+        navManager.NavigateTo($"/Drawing/{OrderId}/{drawingName}");
+    }
+
+    private void OnDrawingRemoveClick(string id)
+    {
+
+
+    }
+
+    private async Task OnSearchOrderInput(string searchTextInDrawings)
+    {
+
+        var output = await orderData.GetOrderDrawingsAsync(OrderId);
+        if (string.IsNullOrWhiteSpace(searchTextInDrawings) == false)
+        {
+
+            drawings = output.Where(
+                s => s.Name.Contains(searchTextInDrawings, StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+        }
+
+    }
+
+    private void OnDrawingQrCreateClick(string drawingName)
+    {
+        string text="";
+
+        var drawing = orderOne.Drawings.FirstOrDefault(x => x.Name == drawingName);
+
+        string revision = "";
+        if (drawing.DrawingRevision?.Count>0)
+        {
+            revision = drawing.DrawingRevision.OrderByDescending(x => x.Data).FirstOrDefault().Symbol;
+            text = OrderId + '/' + drawing.Name + '/' + revision;
+        }
+        else
+        {
+            text = OrderId + '/' + drawing.Name;
+        }
+        QRCodeGenerator qrGenerator = new QRCodeGenerator();
+        QRCodeData qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
+        QRCode qrCode = new QRCode(qrCodeData);
+
+        qrCodeImage = qrCode.GetGraphic(10);
+
+        MemoryStream outStream = new MemoryStream();
+        System.Drawing.Image bitmap = qrCodeImage;
+
+        Font font = new Font("Arial", 20, FontStyle.Bold, GraphicsUnit.Pixel);
+        Color color = Color.Black;
+        Point atpoint = new Point(qrCodeImage.Width / 2, qrCodeImage.Height - 20);
+        SolidBrush brush = new SolidBrush(color);
+        Graphics graphics = Graphics.FromImage(qrCodeImage);
+        StringFormat sf = new StringFormat();
+        sf.Alignment = StringAlignment.Center;
+        sf.LineAlignment = StringAlignment.Center;
+        graphics.DrawString($"{orderOne.NumberBET} {drawing.Name} {revision}", font, brush, atpoint, sf);
+        graphics.Dispose();
+
+        bitmap.Save(outStream, System.Drawing.Imaging.ImageFormat.Png);
+
+        //qrCodeImage.Save(outStream, System.Drawing.Imaging.ImageFormat.Png);
+        Image64 = ("data:image/png;base64, " + Convert.ToBase64String(outStream.ToArray()));
+
+    }
+}
+
+
